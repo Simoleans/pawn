@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+//pdf print loan payment
+Route::get('/print/{id}', [App\Http\Controllers\PrintController::class, 'printPayment'])->name('print.payment');

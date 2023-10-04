@@ -33,6 +33,11 @@ class Loan extends Model
         'renovation',
     ];
 
+    protected $casts = [
+        'date_contract' => 'date',
+        'date_contract_expiration' => 'date',
+    ];
+
     public static function boot(): void
     {
         parent::boot();

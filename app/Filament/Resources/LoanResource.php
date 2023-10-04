@@ -28,6 +28,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Wizard;
 
+
 class LoanResource extends Resource
 {
     protected static ?string $model = Loan::class;
@@ -230,9 +231,11 @@ public function saveAnother()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('date_contract')
                     ->label('Fecha de contrato')
+                    ->dateTime('Y-m-d')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('date_contract_expiration')
                     ->label('Fecha de vencimiento')
+                    ->dateTime('Y-m-d')
                     ->searchable(),
 
             ])
@@ -247,24 +250,44 @@ public function saveAnother()
                 ->modalIcon('heroicon-m-credit-card')
                 ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
-                ->action(function (array $data, Payments $payment,Loan $loan): void {
+                ->action(function (array $data, Payments $payment,Loan $loan) {
                     //dd($data,$payment,$loan);
                     $payment->fill($data); //fill save payemtns
 
                     if($data['type_payment'] == 'renovation') {
                         //$loan = Loan::find($data['loan_id']);
-                        $loan->date_contract_expiration = now()->addMonths(1)->format('Y-m-d');
+                        $loan->date_contract_expiration = $loan->date_contract_expiration->addMonths(1)->format('Y-m-d');
                         $loan->renovation = $loan->renovation + 1;
                         $loan->save();
                     }
                     if($payment->save()){
-                        Notification::make()
+
+                            /* $pdf = Pdf::loadView('pdf.reports.payment')->setPaper('a4', 'landscape');
+                            $name = 'logs-' . date('YmdHis') . '.pdf';
+                            $pdf->download($name); */
+                        //dd($payment);
+                            Notification::make()
                             ->title('Pago realizado')
                             ->success()
                             ->send();
+
+                            //return redirect()->route('print.payment', $payment->id);
                     }
+                    //$data['id_recent'] = $payment->id;
+
                     //$item->author()->associate($data['authorId']);
                     //$item->save();
+                })
+                //->modalHidden(fn (Loan $loan,Payments $payment) => dd($loan,$payment))
+                ->after(function (array $data,Payments $payment,Loan $loan) {
+                    //dd($payment,$data);
+
+                    //last payments
+                    $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
+                    //dd($last_payment);
+                    redirect()->route('print.payment', $last_payment->id);
+
+                    return false;
                 })
                 ->slideOver()
             ])
@@ -389,14 +412,14 @@ public function saveAnother()
                         TextInput::make('date_contract')
                             ->label('Fecha de contrato')
                             ->type('date')
-                            ->default(fn (Loan $loan) => $loan->date_contract)
+                            ->default(fn (Loan $loan) => $loan->date_contract->format('Y-m-d'))
                             ->disabled()
                             ->dehydrated()
                             ->required(),
                         TextInput::make('date_contract_expiration')
                             ->label('Fecha de vencimiento')
                             ->type('date')
-                            ->default(fn (Loan $loan) => $loan->date_contract_expiration)
+                            ->default(fn (Loan $loan) => $loan->date_contract_expiration->format('Y-m-d'))
                             ->disabled()
                             ->dehydrated()
                             ->required(),
