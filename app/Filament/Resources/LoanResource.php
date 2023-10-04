@@ -260,27 +260,30 @@ public function saveAnother()
                         $loan->renovation = $loan->renovation + 1;
                         $loan->save();
                     }
-                    if($payment->save()){
+
+                    $payment->save();
+                    //if($payment->save()){
 
                             /* $pdf = Pdf::loadView('pdf.reports.payment')->setPaper('a4', 'landscape');
                             $name = 'logs-' . date('YmdHis') . '.pdf';
                             $pdf->download($name); */
                         //dd($payment);
-                            Notification::make()
-                            ->title('Pago realizado')
-                            ->success()
-                            ->send();
 
                             //return redirect()->route('print.payment', $payment->id);
-                    }
+                    //}
                     //$data['id_recent'] = $payment->id;
 
                     //$item->author()->associate($data['authorId']);
                     //$item->save();
                 })
                 //->modalHidden(fn (Loan $loan,Payments $payment) => dd($loan,$payment))
-                ->after(function (array $data,Payments $payment,Loan $loan) {
+                ->after(function (array $data,Payments $payment,Loan $loan)  {
                     //dd($payment,$data);
+                    Notification::make()
+                        ->title('Pago realizado')
+                        ->success()
+                        ->send();
+
 
                     //last payments
                     $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
@@ -291,6 +294,7 @@ public function saveAnother()
                 })
                 ->slideOver()
             ])
+            //->successRedirectUrl(fn (Payments $payment): string => route('print.payment', $payment->id))
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

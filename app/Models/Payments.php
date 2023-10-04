@@ -16,13 +16,14 @@ class Payments extends Model
         'amount',
     ];
 
+
     public function loan()
     {
-        return $this->belongsTo(Loans::class);
+        return $this->belongsTo(Loan::class);
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Users::class);
     }
 }
