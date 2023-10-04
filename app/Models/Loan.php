@@ -59,6 +59,11 @@ class Loan extends Model
         return $this->hasMany(ItemsContract::class,'loan_id');
     }
 
+    public function payments() : HasMany
+    {
+        return $this->hasMany(Payments::class,'loan_id');
+    }
+
     public function contract_articles() : HasMany {
         return $this->hasMany(ContractArticle::class,'loan_id');
     }

@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LoanResource\Pages;
 use App\Filament\Resources\LoanResource\RelationManagers;
-use App\Models\Loan;
+use App\Models\{Loan,Payments};
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use App\Enums\Department;
@@ -16,6 +16,7 @@ use App\Actions\ResetStars;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Tables\Table;
 use App\Models\Client;
+use Filament\Notifications\Notification;
 use Filament\Forms\Set;
 use Filament\Forms\Get;
 use App\Models\Item;
@@ -24,6 +25,8 @@ use Filament\Forms\Components\Grid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Wizard;
 
 class LoanResource extends Resource
 {
@@ -182,7 +185,6 @@ public function saveAnother()
                         TextInput::make('date_contract_expiration')
                             ->label('Fecha de vencimiento')
                             ->type('date')
-                            //->format('d/m/Y')
                             ->default(now()->addMonths(1)->format('Y-m-d'))
                             ->disabled()
                             ->dehydrated()
@@ -243,12 +245,26 @@ public function saveAnother()
                 ->label('Pagar')
                 ->icon("heroicon-m-credit-card")
                 ->modalIcon('heroicon-m-credit-card')
-                ->modalHeading(fn (Loan $loan) => "Pagar {$loan->code_contract}")
+                ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
-                ->action(function (array $data, Item $item): void {
-                    dd($item,$data);
-                    $item->author()->associate($data['authorId']);
-                    $item->save();
+                ->action(function (array $data, Payments $payment,Loan $loan): void {
+                    //dd($data,$payment,$loan);
+                    $payment->fill($data); //fill save payemtns
+
+                    if($data['type_payment'] == 'renovation') {
+                        //$loan = Loan::find($data['loan_id']);
+                        $loan->date_contract_expiration = now()->addMonths(1)->format('Y-m-d');
+                        $loan->renovation = $loan->renovation + 1;
+                        $loan->save();
+                    }
+                    if($payment->save()){
+                        Notification::make()
+                            ->title('Pago realizado')
+                            ->success()
+                            ->send();
+                    }
+                    //$item->author()->associate($data['authorId']);
+                    //$item->save();
                 })
                 ->slideOver()
             ])
@@ -267,6 +283,7 @@ public function saveAnother()
         return [
             //RelationManagers\ContractArticlesRelationManager::class,
             RelationManagers\ItemsRelationManager::class,
+            RelationManagers\PaymentsRelationManager::class,
         ];
     }
 
@@ -332,33 +349,96 @@ public function saveAnother()
 
     public static function getFormModalPayment() {
         return [
-            Section::make('Cliente/Contrato')
-            ->description('Datos del cliente/contrato')
-            ->schema([
-                Grid::make(2)
+            Grid::make(2)
                 ->schema([
-                    TextInput::make('contract')
-                        ->label('Contrato')
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(fn (Loan $loan) => $loan->code_contract)
-                        ->required(),
-                    TextInput::make('client')
-                        ->label('Cliente')
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(fn (Loan $loan) => $loan->client->code)
-                        ->required(),
-                    TextInput::make('client_name')
-                        ->label('Nombre del cliente')
-                        ->disabled()
-                        ->dehydrated()
-                        ->columnSpanFull()
-                        ->default(fn (Loan $loan) => $loan->client->full_name)
-                        ->required(),
+                        TextInput::make('contract')
+                            ->label('Contrato')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->code_contract)
+                            ->required(),
+                        Hidden::make('loan_id')
+                            ->default(fn (Loan $loan) => $loan->id),
+                        Hidden::make('user_id')
+                            ->default(fn () => auth()->user()->id),
+                        TextInput::make('client')
+                            ->label('Cliente')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->client->code)
+                            ->required(),
+                        TextInput::make('client_name')
+                            ->label('Nombre del cliente')
+                            ->disabled()
+                            ->dehydrated()
+                            ->columnSpanFull()
+                            ->default(fn (Loan $loan) => $loan->client->full_name)
+                            ->required(),
+                        TextInput::make('capital')
+                            ->label('Capital')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->capital)
+                            ->required(),
+                        TextInput::make('utility')
+                            ->label('Utilidad')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->utility)
+                            ->required(),
+                        TextInput::make('date_contract')
+                            ->label('Fecha de contrato')
+                            ->type('date')
+                            ->default(fn (Loan $loan) => $loan->date_contract)
+                            ->disabled()
+                            ->dehydrated()
+                            ->required(),
+                        TextInput::make('date_contract_expiration')
+                            ->label('Fecha de vencimiento')
+                            ->type('date')
+                            ->default(fn (Loan $loan) => $loan->date_contract_expiration)
+                            ->disabled()
+                            ->dehydrated()
+                            ->required(),
 
+                        Select::make('type_payment')
+                            ->label('Tipo de pago')
+                            ->placeholder('Seleccione un tipo de pago')
+                            ->options([
+                                'amortization' => 'Amortizacion',
+                                'renovation' => 'Renovación',
+                            ])
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state, Loan $loan) {
+                                if($state == 'renovation') {
+                                    $set('amount', $get('utility'));
+                                }else {
+                                    $set('amount', '');
+                                }
+                            })
+                            ->required(),
+
+                        textInput::make('amount')
+                            ->label('Monto a pagar')
+                            ->required()
+                            ->minValue(function (Get $get, Set $set, Loan $loan) {
+                                if($get('type_payment') == 'renovation') {
+                                    return $loan->utility;
+                                }else {
+                                    return 1;
+                                }
+                            })
+                            ->maxValue(function (Get $get, Set $set, Loan $loan) {
+                                if($get('type_payment') == 'renovation') {
+                                    return $loan->utility;
+                                }
+                            })
+                            ->disabled(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') == 'renovation' )
+                            ->dehydrated()
+                            ->numeric(),
                 ]),
-            ]),
+
+
         ];
     }
 }
