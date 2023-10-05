@@ -251,6 +251,31 @@ public function saveAnother()
                 ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
                 ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
+                    if($loan->state != 'verified'){
+                        Notification::make()
+                            ->title('El contrato no esta verificado')
+                            ->warning()
+                            ->send();
+                        return false;
+                    }
+
+                    if($loan->date_contract_expiration < now()){
+                        Notification::make()
+                            ->title('El contrato esta vencido')
+                            ->warning()
+                            ->send();
+                        return false;
+                    }
+
+                    if($loan->balance_pay == 0){
+                        Notification::make()
+                            ->title('El contrato ya fue pagado')
+                            ->warning()
+                            ->send();
+                        return false;
+                    }
+
+
                     $payment->fill($data); //fill save payment
 
                     if($data['type_payment'] == 'renovation') {
@@ -269,19 +294,22 @@ public function saveAnother()
                             'loan_id' => $loan->id,
                             'payment_id' => $payment->id,
                         ]);
-                        $dataAfterLoan->save();
+                        //$dataAfterLoan->save();
                         //update data loan
+                        if($data['amount'] > $loan->capital){
+                            Notification::make()
+                                ->title('El monto a pagar es mayor al capital')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }
+
                         $pay = $loan->capital - $data['amount'];
                         $loan->capital = $loan->capital - $data['amount'];
-                        //$get('capital') * $get('interest_rate') / 100);
-                        //$set('conservation_expense', $state - 3);
-                        //$set('balance_pay', $get('capital') + $get('utility'));
+
                         $loan->utility = $pay * $loan->interest_rate / 100;
                         $loan->balance_pay = $pay + $loan->utility;
                         $loan->save();
-
-
-
                     }
 
                     $payment->save();
@@ -290,18 +318,23 @@ public function saveAnother()
                 //->modalHidden(fn (Loan $loan,Payments $payment) => dd($loan,$payment))
                 ->after(function (array $data,Payments $payment,Loan $loan)  {
                     //dd($payment,$data);
-                    Notification::make()
-                        ->title('Pago realizado')
-                        ->success()
-                        ->send();
+
 
 
                     //last payments
                     $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
                     //dd($last_payment);
-                    redirect()->route('print.payment', $last_payment->id);
+                    if($last_payment){
+                        Notification::make()
+                        ->title('Pago realizado')
+                        ->success()
+                        ->send();
 
-                    return false;
+                        redirect()->route('print.payment', $last_payment->id);
+                    }
+
+
+                    //return false;
                 })
                 ->slideOver()
             ])

@@ -20,7 +20,12 @@
             <div class="col-xs-4 col-xs-offset-4"><small>Whatsapp 71728686</small></div>
         </div>
         <div class="row text-center title">
-            <div class="col-xs-6 col-xs-offset-3"><small>INTERES Y GASTOS DE CONSERVACION</small></div>
+            @if ($payment->type_payment == 'amortization')
+                <div class="col-xs-6 col-xs-offset-3"><small>AMORTIZACION</small></div>
+                @elseif($payment->type_payment == 'renovation')
+                <div class="col-xs-6 col-xs-offset-3"><small>INTERES Y GASTOS DE CONSERVACION</small></div>
+
+            @endif
         </div>
         <br>
         <div class="row">
@@ -130,13 +135,29 @@
             </div>
         </div>
         <br>
-        <div class="row">
-            <div class="col-xs-5" style="font-weight: 900; font-size: 16px">TOTAL:</div>
-            <div class="col-xs-4" style="font-weight: 900;">
-                {{ strtoupper($payment->amount) }}
+        @if ($payment->type_payment == 'amortization')
+            <div class="row">
+                <div class="col-xs-5" style="font-weight: 900;font-size: 16px">AMORTIZACION:</div>
+                <div class="col-xs-4" style="font-weight: 900;">
+                    {{ $payment->amount }}
+                </div>
             </div>
-        </div>
-        <br>
+            <br>
+            <div class="row">
+                <div class="col-xs-5" style="font-weight: 900;">Fecha de vencimiento:</div>
+                <div class="col-xs-4" style="font-weight: 900;">
+                    {{ $payment->loan->date_contract_expiration->format('Y-m-d') }}
+                </div>
+            </div>
+        @else
+            <div class="row">
+                <div class="col-xs-5" style="font-weight: 900; font-size: 16px">TOTAL:</div>
+                <div class="col-xs-4" style="font-weight: 900;">
+                    {{ strtoupper($payment->amount) }}
+                </div>
+            </div>
+            <br>
+        @endif
         {{-- <div class="row">
             <div class="col-xs-5" style="font-weight: 900;">Cod. Cliente:</div>
             <div class="col-xs-4" style="font-weight: 900;">

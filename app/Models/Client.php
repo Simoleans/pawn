@@ -70,4 +70,12 @@ class Client extends Model
     {
         return $this->first_name . ' ' . $this->last_name;
     }
+
+    public static function getFullNameQuery()
+    {
+        return self::select(
+            \DB::raw('CONCAT(first_name, " ", last_name) as name'),
+            'id'
+        );
+    }
 }
