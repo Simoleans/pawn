@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LoanResource\Pages;
 use App\Filament\Resources\LoanResource\RelationManagers;
-use App\Models\{Loan,Payments};
+use App\Models\{Loan,Payments,DataAfterLoan};
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use App\Enums\Department;
@@ -250,31 +250,42 @@ public function saveAnother()
                 ->modalIcon('heroicon-m-credit-card')
                 ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
-                ->action(function (array $data, Payments $payment,Loan $loan) {
-                    //dd($data,$payment,$loan);
-                    $payment->fill($data); //fill save payemtns
+                ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
+                    $payment->fill($data); //fill save payment
 
                     if($data['type_payment'] == 'renovation') {
-                        //$loan = Loan::find($data['loan_id']);
                         $loan->date_contract_expiration = $loan->date_contract_expiration->addMonths(1)->format('Y-m-d');
                         $loan->renovation = $loan->renovation + 1;
                         $loan->save();
+                    }else if($data['type_payment'] == 'amortization') {
+                        //save actually data loan in dataAfterLoan
+                        $dataAfterLoan->fill([
+                            'capital' => $loan->capital,
+                            'interest_rate' => $loan->interest_rate,
+                            'conservation_expense' => $loan->conservation_expense,
+                            'legal_interest' => $loan->legal_interest,
+                            'utility' => $loan->utility,
+                            'balance_pay' => $loan->balance_pay,
+                            'loan_id' => $loan->id,
+                            'payment_id' => $payment->id,
+                        ]);
+                        $dataAfterLoan->save();
+                        //update data loan
+                        $pay = $loan->capital - $data['amount'];
+                        $loan->capital = $loan->capital - $data['amount'];
+                        //$get('capital') * $get('interest_rate') / 100);
+                        //$set('conservation_expense', $state - 3);
+                        //$set('balance_pay', $get('capital') + $get('utility'));
+                        $loan->utility = $pay * $loan->interest_rate / 100;
+                        $loan->balance_pay = $pay + $loan->utility;
+                        $loan->save();
+
+
+
                     }
 
                     $payment->save();
-                    //if($payment->save()){
 
-                            /* $pdf = Pdf::loadView('pdf.reports.payment')->setPaper('a4', 'landscape');
-                            $name = 'logs-' . date('YmdHis') . '.pdf';
-                            $pdf->download($name); */
-                        //dd($payment);
-
-                            //return redirect()->route('print.payment', $payment->id);
-                    //}
-                    //$data['id_recent'] = $payment->id;
-
-                    //$item->author()->associate($data['authorId']);
-                    //$item->save();
                 })
                 //->modalHidden(fn (Loan $loan,Payments $payment) => dd($loan,$payment))
                 ->after(function (array $data,Payments $payment,Loan $loan)  {
