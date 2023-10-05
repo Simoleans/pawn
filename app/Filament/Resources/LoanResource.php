@@ -294,7 +294,6 @@ public function saveAnother()
                 })
                 ->slideOver()
             ])
-            //->successRedirectUrl(fn (Payments $payment): string => route('print.payment', $payment->id))
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

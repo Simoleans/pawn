@@ -8,7 +8,7 @@
         </div>
         <br>
         <div class="row">
-            <div class="col-xs-4 col-xs-offset-4" style="font-weight: 900;">CASA DE EMPEÑO Y CAMBIOS</div>
+            <div class="col-xs-4 col-xs-offset-4" style="font-weight: 900">CASA DE EMPEÑO Y CAMBIOS</div>
         </div>
         <div class="row text-center">
             <div class="col-xs-4 col-xs-offset-4"><small>AV. America N° 309 entre F. Granado y S. Roncal</small></div>
@@ -107,6 +107,49 @@
                 </tbody>
             </table>
         @endif
+        <div class="row">
+            <div class="col-xs-12"><b>*********************************************************************************************************************</b>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-5" style="font-weight: 900;">Saldo Adeudado</div>
+            <div class="col-xs-4" style="font-weight: 900;">{{ $payment->loan->capital }}</div>
+        </div>
+          <br>
+        <div class="row">
+            <div class="col-xs-5" style="font-weight: 900;">Interes 3%</div>
+            <div class="col-xs-4" style="font-weight: 900;">{{ $payment->loan->legal_interest }}</div>
+            {{-- <div class="col-xs-3" style="font-weight: 900;">Hora</div>
+            <div class="col-xs-3" style="font-weight: 900;">{{ $payment->created_at->format("H:m:s") }}</div> --}}
+        </div>
+          <br>
+        <div class="row">
+            <div class="col-xs-5" style="font-weight: 900;">Gastos Conservacion:</div>
+            <div class="col-xs-4" style="font-weight: 900;">
+                {{ $payment->loan->conservation_expense }}
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-xs-5" style="font-weight: 900; font-size: 16px">TOTAL:</div>
+            <div class="col-xs-4" style="font-weight: 900;">
+                {{ strtoupper($payment->amount) }}
+            </div>
+        </div>
+        <br>
+        {{-- <div class="row">
+            <div class="col-xs-5" style="font-weight: 900;">Cod. Cliente:</div>
+            <div class="col-xs-4" style="font-weight: 900;">
+                {{ $payment->loan->client->code }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-5" style="font-weight: 900;">Cod. Contrato:</div>
+            <div class="col-xs-4" style="font-weight: 900;">
+                {{ $payment->loan->code_contract }}
+            </div>
+        </div> --}}
+        <br>
         <div class="row">
             <div class="col-xs-12"><b>*****************************************************************************************************************************</b>
             </div>
