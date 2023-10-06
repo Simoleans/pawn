@@ -24,6 +24,8 @@
                 <div class="col-xs-6 col-xs-offset-3"><small>AMORTIZACION</small></div>
                 @elseif($payment->type_payment == 'renovation')
                 <div class="col-xs-6 col-xs-offset-3"><small>INTERES Y GASTOS DE CONSERVACION</small></div>
+                @elseif ($payment->type_payment == 'complete')
+                <div class="col-xs-6 col-xs-offset-3"><small>CANCELACION DEL CONTRATO</small></div>
 
             @endif
         </div>
@@ -149,6 +151,14 @@
                     {{ $payment->loan->date_contract_expiration->format('Y-m-d') }}
                 </div>
             </div>
+        @elseif ($payment->type_payment == 'complete')
+            <div class="row">
+                <div class="col-xs-5" style="font-weight: 900;font-size: 16px">TOTAL CANCELADO:</div>
+                <div class="col-xs-4" style="font-weight: 900;">
+                    {{ $payment->amount }}
+                </div>
+            </div>
+            <br>
         @else
             <div class="row">
                 <div class="col-xs-5" style="font-weight: 900; font-size: 16px">TOTAL:</div>

@@ -12,7 +12,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use App\Actions\ResetStars;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Tables\Table;
 use App\Models\Client;
@@ -26,7 +25,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Wizard;
 
 
 class LoanResource extends Resource
@@ -129,7 +127,6 @@ public function saveAnother()
                             TextInput::make('interest_rate')
                                 ->label('Tasa de interés (%)')
                                 ->live(onBlur: true)
-                                //->afterStateUpdated(fn (Set $set, ?string $state) => $set('conservation_expense', $state - 3))
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
 
                                     //porcent capital and interest_rate
@@ -224,6 +221,7 @@ public function saveAnother()
                     ->color(fn (string $state): string => match ($state) {
                         'borrador' => 'gray',
                         'reviewing' => 'warning',
+                        'payment_complete' => 'success',
                         'verified' => 'success',
                         'rejected' => 'danger',
                     })
@@ -246,14 +244,22 @@ public function saveAnother()
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('updateAuthor')
                 ->label('Pagar')
+                ->hidden(fn (Loan $loan) => $loan->state == 'payment_complete')
                 ->icon("heroicon-m-credit-card")
                 ->modalIcon('heroicon-m-credit-card')
                 ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
                 ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
-                    if($loan->state != 'verified'){
+
+                    if($loan->state == 'borrador'){
                         Notification::make()
                             ->title('El contrato no esta verificado')
+                            ->warning()
+                            ->send();
+                        return false;
+                    }else if($loan->state == 'payment_complete'){
+                        Notification::make()
+                            ->title('El contrato ya fue pagado')
                             ->warning()
                             ->send();
                         return false;
@@ -267,14 +273,13 @@ public function saveAnother()
                         return false;
                     }
 
-                    if($loan->balance_pay == 0){
+                    /* if($loan->balance_pay == 0){
                         Notification::make()
                             ->title('El contrato ya fue pagado')
                             ->warning()
                             ->send();
                         return false;
-                    }
-
+                    } */
 
                     $payment->fill($data); //fill save payment
 
@@ -294,7 +299,7 @@ public function saveAnother()
                             'loan_id' => $loan->id,
                             'payment_id' => $payment->id,
                         ]);
-                        //$dataAfterLoan->save();
+                        $dataAfterLoan->save();
                         //update data loan
                         if($data['amount'] > $loan->capital){
                             Notification::make()
@@ -310,20 +315,20 @@ public function saveAnother()
                         $loan->utility = $pay * $loan->interest_rate / 100;
                         $loan->balance_pay = $pay + $loan->utility;
                         $loan->save();
+
+                    }else if($data['type_payment'] == 'complete') {
+
+                        $loan->state = 'payment_complete';
+                        $loan->save();
+
                     }
 
                     $payment->save();
 
                 })
-                //->modalHidden(fn (Loan $loan,Payments $payment) => dd($loan,$payment))
                 ->after(function (array $data,Payments $payment,Loan $loan)  {
-                    //dd($payment,$data);
-
-
-
                     //last payments
                     $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
-                    //dd($last_payment);
                     if($last_payment){
                         Notification::make()
                         ->title('Pago realizado')
@@ -333,8 +338,6 @@ public function saveAnother()
                         redirect()->route('print.payment', $last_payment->id);
                     }
 
-
-                    //return false;
                 })
                 ->slideOver()
             ])
@@ -477,11 +480,14 @@ public function saveAnother()
                             ->options([
                                 'amortization' => 'Amortizacion',
                                 'renovation' => 'Renovación',
+                                'complete' => 'Pago completo',
                             ])
                             ->live()
                             ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state, Loan $loan) {
                                 if($state == 'renovation') {
                                     $set('amount', $get('utility'));
+                                }else if($state == 'complete') {
+                                    $set('amount', $get('capital') + $get('utility'));
                                 }else {
                                     $set('amount', '');
                                 }
@@ -503,7 +509,7 @@ public function saveAnother()
                                     return $loan->utility;
                                 }
                             })
-                            ->disabled(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') == 'renovation' )
+                            ->disabled(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') == 'renovation' || $get('type_payment') == 'complete')
                             ->dehydrated()
                             ->numeric(),
                 ]),
