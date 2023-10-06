@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('loan_id');
             $table->foreign('loan_id')->references('id')->on('loans')->onDelete('cascade');
             $table->unsignedBigInteger('payment_id');
-            $table->foreign('payment')->references('id')->on('payments')->onDelete('cascade');
+            $table->foreign('payment_id')->references('id')->on('payments')->onDelete('cascade');
             $table->decimal('capital', 8, 2);
             $table->decimal('interest_rate', 8, 2);
             $table->decimal('legal_interest', 8, 2);

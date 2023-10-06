@@ -116,7 +116,7 @@ public function saveAnother()
                                 ->required(),
                             TextInput::make('capital')
                                 ->label('Capital')
-                                ->live(onBlur: true)
+                                ->live()
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
 
                                     //porcent capital and interest_rate
@@ -126,7 +126,7 @@ public function saveAnother()
                                 ->numeric(),
                             TextInput::make('interest_rate')
                                 ->label('Tasa de interés (%)')
-                                ->live(onBlur: true)
+                                ->live()
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
 
                                     //porcent capital and interest_rate
@@ -289,7 +289,7 @@ public function saveAnother()
                         $loan->save();
                     }else if($data['type_payment'] == 'amortization') {
                         //save actually data loan in dataAfterLoan
-                        $dataAfterLoan->fill([
+                        /* $dataAfterLoan->fill([
                             'capital' => $loan->capital,
                             'interest_rate' => $loan->interest_rate,
                             'conservation_expense' => $loan->conservation_expense,
@@ -299,7 +299,7 @@ public function saveAnother()
                             'loan_id' => $loan->id,
                             'payment_id' => $payment->id,
                         ]);
-                        $dataAfterLoan->save();
+                        $dataAfterLoan->save(); */
                         //update data loan
                         if($data['amount'] > $loan->capital){
                             Notification::make()
