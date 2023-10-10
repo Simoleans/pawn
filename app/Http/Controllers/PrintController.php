@@ -13,6 +13,8 @@ class PrintController extends Controller
     {
         $payment = Payments::find($id);
         $pdf = PDF::loadView('pdf.reports.payment', compact('payment'))->setPaper('legal', 'portrait');
-        return $pdf->stream('payment.pdf');
+         return $pdf->download('payment.pdf');
+
+         //return redirect()->back();
     }
 }

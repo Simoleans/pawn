@@ -262,17 +262,7 @@ class LoanResource extends Resource
                         $loan->save();
                     }else if($data['type_payment'] == 'amortization') {
                         //save actually data loan in dataAfterLoan
-                        $dataAfterLoan->fill([
-                            'capital' => $loan->capital,
-                            'interest_rate' => $loan->interest_rate,
-                            'conservation_expense' => $loan->conservation_expense,
-                            'legal_interest' => $loan->legal_interest,
-                            'utility' => $loan->utility,
-                            'balance_pay' => $loan->balance_pay,
-                            'loan_id' => $loan->id,
-                            'payment_id' => $payment->id,
-                        ]);
-                        $dataAfterLoan->save();
+
                         //update data loan
                         if($data['amount'] > $loan->capital){
                             Notification::make()
@@ -296,17 +286,31 @@ class LoanResource extends Resource
 
                     }
 
+                    Notification::make()
+                        ->title('Pago realizado')
+                        ->success()
+                        ->send();
+
                     $payment->save();
+
+                    $dataAfterLoan->fill([
+                        'capital' => $loan->capital,
+                        'interest_rate' => $loan->interest_rate,
+                        'conservation_expense' => $loan->conservation_expense,
+                        'legal_interest' => $loan->legal_interest,
+                        'utility' => $loan->utility,
+                        'balance_pay' => $loan->balance_pay,
+                        'loan_id' => $loan->id,
+                        'payment_id' => $payment->id,
+                    ]);
+                    $dataAfterLoan->save();
 
                 })
                 ->after(function (array $data,Payments $payment,Loan $loan)  {
                     //last payments
                     $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
                     if($last_payment){
-                        Notification::make()
-                        ->title('Pago realizado')
-                        ->success()
-                        ->send();
+
 
                         redirect()->route('print.payment', $last_payment->id);
                     }
@@ -497,9 +501,20 @@ class LoanResource extends Resource
                             ->live()
                             ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state, Loan $loan) {
                                 if($state) {
-                                    $set('amount', ($get('capital') + $get('utility')) -  $state ?? 0);
+                                    $set('total_discount', ($get('capital') + $get('utility')) -  $state ?? 0);
                                 }
                             })
+                            ->columnStart(2)
+                            ->required(),
+
+                ]),
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('total_discount')
+                            ->label('Total con descuento')
+                            ->numeric()
+                            ->disabled()
+                            ->hidden(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') != 'complete')
                             ->columnStart(2)
                             ->required(),
 

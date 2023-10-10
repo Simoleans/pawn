@@ -41,9 +41,9 @@
           <br>
         <div class="row">
             <div class="col-xs-3" style="font-weight: 900;">Fecha</div>
-            <div class="col-xs-3" style="font-weight: 900;">{{ $payment->created_at->format("Y-m-d") }}</div>
+            <div class="col-xs-3" style="font-weight: 900;">{{ \Carbon\Carbon::parse($payment->created_at)->format("Y-m-d") }}</div>
             <div class="col-xs-3" style="font-weight: 900;">Hora</div>
-            <div class="col-xs-3" style="font-weight: 900;">{{ $payment->created_at->format("H:m:s") }}</div>
+            <div class="col-xs-3" style="font-weight: 900;">{{ \Carbon\Carbon::parse($payment->created_at)->format("H:m:s") }}</div>
         </div>
           <br>
         <div class="row">
@@ -127,7 +127,7 @@
             <div class="col-xs-5" style="font-weight: 900;">Interes 3%</div>
             <div class="col-xs-4" style="font-weight: 900;">{{ $payment->loan->legal_interest }}</div>
             {{-- <div class="col-xs-3" style="font-weight: 900;">Hora</div>
-            <div class="col-xs-3" style="font-weight: 900;">{{ $payment->created_at->format("H:m:s") }}</div> --}}
+            <div class="col-xs-3" style="font-weight: 900;">{{ \Carbon\Carbon::parse($payment->created_at)->format("H:m:s") }}</div> --}}
         </div>
           <br>
         <div class="row">
@@ -148,7 +148,7 @@
             <div class="row">
                 <div class="col-xs-5" style="font-weight: 900;">Fecha de vencimiento:</div>
                 <div class="col-xs-4" style="font-weight: 900;">
-                    {{ $payment->loan->date_contract_expiration->format('Y-m-d') }}
+                    {{ \Carbon\Carbon::parse($payment->loan->date_contract_expiration)->format('Y-m-d') }}
                 </div>
             </div>
         @elseif ($payment->type_payment == 'complete')

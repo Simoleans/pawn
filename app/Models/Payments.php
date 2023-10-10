@@ -14,7 +14,8 @@ class Payments extends Model
         'user_id',
         'type_payment',
         'amount',
-        'discount'
+        'discount',
+        'discount_total'
     ];
 
 
