@@ -49,8 +49,12 @@ class PaymentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('type_payment')
             ->columns([
-                Tables\Columns\TextColumn::make('type_payment'),
-                Tables\Columns\TextColumn::make('amount'),
+                Tables\Columns\TextColumn::make('type_payment')
+                ->label('Tipo de Pago'),
+                Tables\Columns\TextColumn::make('amount')
+                ->label('Monto'),
+                Tables\Columns\TextColumn::make('discount')
+                ->label('Descuento'),
             ])
             ->recordTitle(fn ($record) => $record->type_payment)
             ->filters([
@@ -63,11 +67,7 @@ class PaymentsRelationManager extends RelationManager
                 /* Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(), */
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])->emptyStateHeading('No tiene pagos');
+            ->emptyStateHeading('No tiene pagos');
             /* ->emptyStateActions([
                 Tables\Actions\CreateAction::make(),
             ]); */

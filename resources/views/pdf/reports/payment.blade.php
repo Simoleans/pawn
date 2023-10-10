@@ -73,7 +73,7 @@
             </div>
         </div>
         <br>
-        @if (count($payment->loan->items) > 0)
+        @if (count($payment->loan->articulos) > 0)
             <div class="row">
                 <div class="col-xs-12"><b>*****************************************************************************************************************************</b>
                 </div>
@@ -98,16 +98,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($payment->loan->items as $i)
+                    @foreach ($payment->loan->articulos as $i)
                         <tr>
                             <td class="text-center py-3 text-sm md:text-lg">
-                                {{ $i->item->name }}
+                                {{ $i->name }}
                             </td>
                             <td class="text-center py-3 text-sm md:text-lg">
-                                {{ $i->item->estimated_value }}
+                                {{ $i->estimated_value }}
                             </td>
                             <td class="text-center py-3 text-sm md:text-lg">
-                                {{ $i->item->currency}}
+                                {{ $i->currency}}
                             </td>
                         </tr>
                     @endforeach

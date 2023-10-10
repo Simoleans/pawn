@@ -37,22 +37,23 @@ class ItemResource extends Resource
 
     public static function getLabel(): ?string
     {
-        return __('Artículo');
+        return __('Articulo');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('Artículos');
+        return __('Articulos');
     }
+
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 FileUpload::make('image_url')
-                ->label('Foto del Artículo')
-                ->image()
-                ->columnSpanFull(),
+                    ->label('Foto del Artículo')
+                    ->image()
+                    ->columnSpanFull(),
                 Forms\Components\Select::make('client_id')
                     ->label('Cliente')
                     ->relationship('client', 'first_name')

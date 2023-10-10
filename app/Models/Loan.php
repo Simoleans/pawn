@@ -31,12 +31,13 @@ class Loan extends Model
         'date_contract_expiration',
         'user_id',
         'renovation',
+        'stimated'
     ];
 
-    protected $casts = [
+    /* protected $casts = [
         'date_contract' => 'date',
         'date_contract_expiration' => 'date',
-    ];
+    ]; */
 
     public static function boot(): void
     {
@@ -54,14 +55,19 @@ class Loan extends Model
 
     }
 
+    public function setArticleStimatedAttribute($key, $value)
+    {
+        $this->attributes['article_stimated'] = 100;
+    }
+
     public function client() : BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
 
-    public function items() : HasMany
+    public function articulos() : HasMany
     {
-        return $this->hasMany(ItemsContract::class,'loan_id');
+        return $this->hasMany(Item::class,'loan_id');
     }
 
     public function payments() : HasMany

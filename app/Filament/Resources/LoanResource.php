@@ -51,25 +51,6 @@ class LoanResource extends Resource
         return __('Préstamos');
     }
 
-    protected function getFormActions(): array
-    {
-        return [
-            $this->getCreateFormAction(),
-            Action::make('saveAnother')
-                ->label('Save & create another')
-                ->action('saveAnother')
-                ->keyBindings(['mod+shift+s'])
-                ->color('secondary'),
-            $this->getCancelFormAction(),
-        ];
-    }
-
-public function saveAnother()
-    {
-        $resources = static::getResource();
-        $this->create();
-        $this->redirect($resources::getUrl('create'));
-    }
 
     public static function form(Form $form): Form
     {
@@ -91,11 +72,12 @@ public function saveAnother()
                     )
                     ->required(),
 
-                    Grid::make(4)
+                    Grid::make(3)
                         ->schema([
 
                             Select::make('state')
                                 ->label('Estado')
+                                ->hidden()
                                 ->placeholder('Seleccione un estado')
                                 ->options([
                                     'borrador' => 'Borrador',
@@ -250,7 +232,6 @@ public function saveAnother()
                 ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
                 ->form(self::getFormModalPayment())
                 ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
-
                     if($loan->state == 'borrador'){
                         Notification::make()
                             ->title('El contrato no esta verificado')
@@ -273,23 +254,15 @@ public function saveAnother()
                         return false;
                     }
 
-                    /* if($loan->balance_pay == 0){
-                        Notification::make()
-                            ->title('El contrato ya fue pagado')
-                            ->warning()
-                            ->send();
-                        return false;
-                    } */
-
                     $payment->fill($data); //fill save payment
 
                     if($data['type_payment'] == 'renovation') {
-                        $loan->date_contract_expiration = $loan->date_contract_expiration->addMonths(1)->format('Y-m-d');
+                        $loan->date_contract_expiration = \Carbon\Carbon::parse($loan->date_contract_expiration)->addMonths(1)->format('Y-m-d');
                         $loan->renovation = $loan->renovation + 1;
                         $loan->save();
                     }else if($data['type_payment'] == 'amortization') {
                         //save actually data loan in dataAfterLoan
-                        /* $dataAfterLoan->fill([
+                        $dataAfterLoan->fill([
                             'capital' => $loan->capital,
                             'interest_rate' => $loan->interest_rate,
                             'conservation_expense' => $loan->conservation_expense,
@@ -299,7 +272,7 @@ public function saveAnother()
                             'loan_id' => $loan->id,
                             'payment_id' => $payment->id,
                         ]);
-                        $dataAfterLoan->save(); */
+                        $dataAfterLoan->save();
                         //update data loan
                         if($data['amount'] > $loan->capital){
                             Notification::make()
@@ -461,15 +434,15 @@ public function saveAnother()
                             ->required(),
                         TextInput::make('date_contract')
                             ->label('Fecha de contrato')
-                            ->type('date')
-                            ->default(fn (Loan $loan) => $loan->date_contract->format('Y-m-d'))
+                            //->type('date')
+                            ->default(fn (Loan $loan) => $loan->date_contract)
                             ->disabled()
                             ->dehydrated()
                             ->required(),
                         TextInput::make('date_contract_expiration')
                             ->label('Fecha de vencimiento')
-                            ->type('date')
-                            ->default(fn (Loan $loan) => $loan->date_contract_expiration->format('Y-m-d'))
+                            //->type('date')
+                            ->default(fn (Loan $loan) => $loan->date_contract_expiration)
                             ->disabled()
                             ->dehydrated()
                             ->required(),
@@ -488,13 +461,14 @@ public function saveAnother()
                                     $set('amount', $get('utility'));
                                 }else if($state == 'complete') {
                                     $set('amount', $get('capital') + $get('utility'));
+                                    $set('discount', null);
                                 }else {
                                     $set('amount', '');
                                 }
                             })
                             ->required(),
 
-                        textInput::make('amount')
+                        TextInput::make('amount')
                             ->label('Monto a pagar')
                             ->required()
                             ->minValue(function (Get $get, Set $set, Loan $loan) {
@@ -512,6 +486,23 @@ public function saveAnother()
                             ->disabled(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') == 'renovation' || $get('type_payment') == 'complete')
                             ->dehydrated()
                             ->numeric(),
+                ]),
+
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('discount')
+                            ->label('Descuento por pronto pago')
+                            ->numeric()
+                            ->hidden(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') != 'complete')
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state, Loan $loan) {
+                                if($state) {
+                                    $set('amount', ($get('capital') + $get('utility')) -  $state ?? 0);
+                                }
+                            })
+                            ->columnStart(2)
+                            ->required(),
+
                 ]),
 
 

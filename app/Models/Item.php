@@ -25,8 +25,10 @@ class Item extends Model
         'state',
         'condition',
         'estimated_value',
+        'sale_price',
         'currency',
         'image_url',
+        'loan_id',
     ];
 
     protected $appends = [
@@ -40,9 +42,9 @@ class Item extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function loans(): BelongsToMany
+    public function loan(): BelongsTo
     {
-        return $this->BelongsToMany(Loan::class,'id','loan_id');
+        return $this->BelongsTo(Loan::class);
     }
 
     public function branch(): BelongsTo

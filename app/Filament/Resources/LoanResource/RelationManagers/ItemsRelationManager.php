@@ -6,79 +6,46 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Forms\Components\Select;
 use Filament\Tables\Table;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Set;
-use Filament\Forms\Get;
+use Filament\Tables\Columns\Summarizers\Sum;
 use App\Models\Client;
+use Filament\Notifications\Notification;
+use Filament\Forms\Components\FileUpload;
+use App\Models\Item;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\FileUpload;
 
 class ItemsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'items';
+    protected static string $relationship = 'articulos';
 
 
-    public  function getTableHeading(): string
-    {
-        return 'Agregar Artículo';
-    }
-
-    public function getTableModelLabel(): ?string
-    {
-        return 'Artículo';
-    }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Select::make('item_id')
-                    ->label('Artículo')
-                    ->placeholder('Seleccione un artículo')
-                    ->options(
-                        \App\Models\Item::all()->pluck('name', 'id')
-                    )
-                    //->createOptionForm(self::formItem())
-                    ->unique()
-                    ->required(),
-            ]);
-    }
-
-    public static function formItem()
-    {
-        return [
                 FileUpload::make('image_url')
                 ->label('Foto del Artículo')
                 ->image()
                 ->columnSpanFull(),
                 Forms\Components\Select::make('client_id')
                     ->label('Cliente')
-                    ->options(
-                        \App\Models\Client::getFullNameQuery()->get()->pluck('name', 'id')
-                    )
-                    //->relationship('client', 'first_name')
-                    //->getOptionLabelFromRecordUsing(fn (Client $record) => "{$record->first_name} {$record->last_name}")
+                    ->required()
+                    ->relationship('client', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn (Client $record) => "{$record->first_name} {$record->last_name}")
                     ->searchable(['first_name', 'last_name'])
                     ->preload(),
                 Forms\Components\Select::make('category_id')
                     ->label('Categoría')
-                    ->options(
-                        \App\Models\Category::all()->pluck('name', 'id')
-                    )
-                    //->relationship('category', 'name')
+                    ->relationship('category', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 Forms\Components\Select::make('branch_id')
                     ->label('Sucursal')
-                    ->options(
-                        \App\Models\Branch::all()->pluck('name', 'id')
-                    )
-                    //->relationship('branch', 'name')
+                    ->relationship('branch', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -129,7 +96,7 @@ class ItemsRelationManager extends RelationManager
                     ->label('Precio de Venta')
                     ->required()
                     ->numeric(),
-        ];
+            ]);
     }
 
     public function table(Table $table): Table
@@ -137,40 +104,53 @@ class ItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('item.name'),
-                Tables\Columns\TextColumn::make('item.estimated_value')
-                    ->label('Valor Estimado'),
-                Tables\Columns\TextColumn::make('item.currency')
-                    ->label('Moneda'),
-                Tables\Columns\ImageColumn::make('item.image_url')
-                    ->label('Imagen')
-                    ->extraImgAttributes(['loading' => 'lazy']),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Artículo')
+                    ->searchable(),
 
+                Tables\Columns\TextColumn::make('estimated_value')
+                    ->label('Valor Estimado')
+                    ->summarize(Sum::make()->label('Valor Soportado'))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('currency')
+                    ->label('Moneda')
+                    ->searchable(),
             ])
-
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                ->label('Vincular Artículo'),
-
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                //Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                //Tables\Actions\ViewAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
-            ->emptyStateActions([
-                Tables\Actions\CreateAction::make()
-                ->label('Vincular Artículo')
-                ->icon('heroicon-o-plus'),
+                Tables\Actions\EditAction::make()
+                ->hidden(fn (Item $item) => $item->loan->state == 'verified'),
+                Tables\Actions\DeleteAction::make()
+                    ->action(function ($record) {
+                       //dd($record->loan->state);
+                        if ($record->loan->state == 'verified') {
+                            Notification::make()
+                                ->title('No se puede eliminar el artículo, El préstamo ya fue verificado')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }else{
+                            $record->delete();
+                            return true;
+                        }
 
+                    }),
+            ])
+
+            //->action(fn ($record) => $record->delete()),
+           /*  ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->hidden(fn (Item $item) => dd($item)),
+                ]),
+            ]) */
+            ->emptyStateActions([
+                Tables\Actions\CreateAction::make(),
             ]);
     }
 }
