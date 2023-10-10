@@ -62,7 +62,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Lime,
                 'success' => '#46AE4E',
                 'warning' => '#F8AA19',
-            ])
-            ->plugin(FilamentSpatieRolesPermissionsPlugin::make());
+            ]);
+            //->plugin(FilamentSpatieRolesPermissionsPlugin::make());
     }
 }

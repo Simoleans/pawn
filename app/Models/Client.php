@@ -11,9 +11,22 @@ class Client extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'code',
+        'user_id',
+        'document',
+        'branch_id',
+        'address',
+        'phone',
+        'email',
+        'mobile',
+        'issued',
+    ];
     protected $guarded = [
         'id',
-        'code'
+        'code',
     ];
 
     protected $appends = [
@@ -26,6 +39,8 @@ class Client extends Model
 
         static::creating(function ($client) {
             $client->user_id = auth()->id() ?? User::query()->first()->id;
+            //branch_id
+            //$client->branch_id = auth()->user()->branch_id;
         });
 
         static::created(function ($client) {

@@ -36,6 +36,17 @@ class LoanResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()->hasRole('super')) {
+            return $query;
+        }else{
+            return $query->whereIn('branch_id', auth()->user()->branches->pluck('id')->toArray());
+        }
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Gestión');
@@ -67,9 +78,14 @@ class LoanResource extends Resource
                 Select::make('branch_id')
                     ->label('Sucursal')
                     ->placeholder('Seleccione una sucursal')
-                    ->options(
-                        \App\Models\Branch::all()->pluck('name', 'id')
-                    )
+                    ->options(function () {
+                        if (auth()->user()->hasRole('super')) {
+                            return \App\Models\Branch::pluck('name', 'id');
+                        }else{
+                            return auth()->user()->branches->pluck('name', 'id');
+                        }
+                    })
+                    //->default(fn () => auth()->user()->branch->id ?? null)
                     ->required(),
 
                     Grid::make(3)

@@ -37,6 +37,18 @@ class Item extends Model
         'condition_label',
     ];
 
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::created(function ($item) {
+            $item->client_id = $item->loan->client_id;
+            $item->branch_id = $item->loan->branch_id;
+            $item->save();
+        });
+
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);

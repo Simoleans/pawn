@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class PaymentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'payments';
+
     //protected static string $title = 'Pagos';
 
 

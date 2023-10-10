@@ -67,11 +67,13 @@ class UserResource extends Resource
                     ->multiple()
                     ->label(__('Roles'))
                     ->preload()
+                    ->required()
                     ->relationship('roles', 'name'),
                 Select::make('branches')
                     ->multiple()
                     ->label(__('Sucursales'))
                     ->preload()
+                    ->required()
                     ->relationship('branches', 'name'),
             ]);
     }

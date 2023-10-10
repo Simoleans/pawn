@@ -20,6 +20,12 @@ class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'articulos';
 
+
+    protected function afterCreate(): void
+    {
+        dd('afterCreate');
+    }
+
     public function form(Form $form): Form
     {
         return $form
@@ -76,7 +82,7 @@ class ItemsRelationManager extends RelationManager
                 ])
                 ->default('BOLIVIANOS')
                 ->required(),
-                /* Forms\Components\Select::make('state')
+                Forms\Components\Select::make('state')
                 ->label('Estado')
                 ->options([
                     'pending' => 'Pendiente',
@@ -87,9 +93,10 @@ class ItemsRelationManager extends RelationManager
                     'for_sale' => 'En Venta',
                 ])
                 ->default('pending')
-                ->disabled()
+                //->disabled()
+                ->hidden()
                 ->dehydrated()
-                ->required(), */
+                ->required(),
                 /* Forms\Components\TextInput::make('sale_price')
                     ->label('Precio de Venta')
                     ->required()

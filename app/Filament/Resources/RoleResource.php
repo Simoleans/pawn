@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\BranchResource\Pages;
-use App\Filament\Resources\BranchResource\RelationManagers;
-use App\Models\Branch;
+use App\Filament\Resources\RoleResource\Pages;
+use App\Filament\Resources\RoleResource\RelationManagers;
+use App\Models\Role;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,14 +13,16 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class BranchResource extends Resource
+class RoleResource extends Resource
 {
-    protected static ?string $model = Branch::class;
+    protected static ?string $model = Role::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-home';
-    protected static ?string $pluralModelLabel = 'Sucursales';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?string $pluralModelLabel = 'Roles';
+
+
+    protected static ?int $navigationSort = 3;
 
     public static function getNavigationGroup(): ?string
     {
@@ -29,12 +31,12 @@ class BranchResource extends Resource
 
     public static function getLabel(): ?string
     {
-        return 'Sucursal';
+        return 'Rol';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Sucursales';
+        return 'Roles';
     }
 
     public static function form(Form $form): Form
@@ -42,22 +44,11 @@ class BranchResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Nombre')
                     ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('address')
-                    ->label('Dirección')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('guard_name')
                     ->required()
-                    ->maxLength(1024),
-                Forms\Components\TextInput::make('phone')
-                    ->label('Teléfono')
-                    ->tel()
-                    ->required()
-                    ->maxLength(20),
-                Forms\Components\TextInput::make('email')
-                    ->label('Correo')
-                    ->email()
-                    ->maxLength(64),
+                    ->maxLength(255),
             ]);
     }
 
@@ -66,14 +57,8 @@ class BranchResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
-                    ->label('Dirección')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->label('Correo')
-                    ->label('Teléfono')
+                Tables\Columns\TextColumn::make('guard_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -110,9 +95,9 @@ class BranchResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBranches::route('/'),
-            'create' => Pages\CreateBranch::route('/create'),
-            'edit' => Pages\EditBranch::route('/{record}/edit'),
+            'index' => Pages\ListRoles::route('/'),
+            'create' => Pages\CreateRole::route('/create'),
+            'edit' => Pages\EditRole::route('/{record}/edit'),
         ];
     }
 }

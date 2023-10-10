@@ -22,6 +22,17 @@ class ClientResource extends Resource
 
     protected static ?string $navigationIcon = 'bi-person-video2';
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()->hasRole('super')) {
+            return $query;
+        }else{
+            return $query->whereIn('branch_id', auth()->user()->branches->pluck('id')->toArray());
+        }
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Gestión');
@@ -54,6 +65,17 @@ class ClientResource extends Resource
                     ->label('Apellidos')
                     ->required()
                     ->maxLength(50),
+                Forms\Components\Select::make('branch_id')
+                    ->label('Sucursal')
+                    ->placeholder('Seleccione una sucursal')
+                    ->options(function () {
+                        if (auth()->user()->hasRole('super')) {
+                            return \App\Models\Branch::pluck('name', 'id');
+                        }else{
+                            return auth()->user()->branches->pluck('name', 'id');
+                        }
+                    })
+                    ->required(),
                 Forms\Components\TextInput::make('document')
                     ->label('Cédula de identidad')
                     ->required()
@@ -71,7 +93,7 @@ class ClientResource extends Resource
                     ->tel()
                     ->maxLength(20),
                 Forms\Components\TextInput::make('email')
-                    ->label('email')
+                    ->label('Email')
                     ->email()
                     ->maxLength(64),
                 Forms\Components\Textarea::make('address')
