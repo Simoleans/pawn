@@ -30,6 +30,11 @@ class ItemResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->whereIn('branch_id', auth()->user()->branches->pluck('id')->toArray());
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Gestión');

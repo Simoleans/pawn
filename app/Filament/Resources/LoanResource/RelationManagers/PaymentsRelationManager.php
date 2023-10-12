@@ -55,7 +55,8 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('amount')
                 ->label('Monto'),
                 Tables\Columns\TextColumn::make('discount')
-                ->label('Descuento'),
+                ->label('Descuento')
+                ->placeholder('Sin descuento.'),
             ])
             ->recordTitle(fn ($record) => $record->type_payment)
             ->filters([

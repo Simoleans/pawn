@@ -23,6 +23,7 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Hidden;
 
@@ -386,6 +387,13 @@ class LoanResource extends Resource
             //RelationManagers\ContractArticlesRelationManager::class,
             RelationManagers\ItemsRelationManager::class,
             RelationManagers\PaymentsRelationManager::class,
+        ];
+    }
+
+    public static function getHeaderWidgets(): array
+    {
+        return [
+            LoanResource\Widgets\LoanOverview::class,
         ];
     }
 
