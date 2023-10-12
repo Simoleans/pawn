@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::drop('contract_articles');
-        Schema::drop('itemsloan');
+        //Schema::drop('itemsloan');
         Schema::drop('items_contracts');
 
 

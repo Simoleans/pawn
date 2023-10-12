@@ -241,104 +241,140 @@ class LoanResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('updateAuthor')
-                ->label('Pagar')
-                ->hidden(fn (Loan $loan) => $loan->state == 'payment_complete')
-                ->icon("heroicon-m-credit-card")
-                ->modalIcon('heroicon-m-credit-card')
-                ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
-                ->form(self::getFormModalPayment())
-                ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
-                    if($loan->state == 'borrador'){
-                        Notification::make()
-                            ->title('El contrato no esta verificado')
-                            ->warning()
-                            ->send();
-                        return false;
-                    }else if($loan->state == 'payment_complete'){
-                        Notification::make()
-                            ->title('El contrato ya fue pagado')
-                            ->warning()
-                            ->send();
-                        return false;
-                    }
-
-                    if($loan->date_contract_expiration < now()){
-                        Notification::make()
-                            ->title('El contrato esta vencido')
-                            ->warning()
-                            ->send();
-                        return false;
-                    }
-
-                    $payment->fill($data); //fill save payment
-
-                    if($data['type_payment'] == 'renovation') {
-                        $loan->date_contract_expiration = \Carbon\Carbon::parse($loan->date_contract_expiration)->addMonths(1)->format('Y-m-d');
-                        $loan->renovation = $loan->renovation + 1;
-                        $loan->save();
-                    }else if($data['type_payment'] == 'amortization') {
-                        //save actually data loan in dataAfterLoan
-
-                        //update data loan
-                        if($data['amount'] > $loan->capital){
+                    ->label('Pagar')
+                    ->hidden(fn (Loan $loan) => $loan->state == 'payment_complete' || $loan->state == 'rejected' || $loan->state == 'borrador' || $loan->date_contract_expiration < now())
+                    ->icon("heroicon-m-credit-card")
+                    ->modalIcon('heroicon-m-credit-card')
+                    ->modalHeading(fn (Loan $loan) => "Pagar el contrato {$loan->code_contract}")
+                    ->form(self::getFormModalPayment())
+                    ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
+                        if($loan->state == 'borrador'){
                             Notification::make()
-                                ->title('El monto a pagar es mayor al capital')
+                                ->title('El contrato no esta verificado')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }else if($loan->state == 'payment_complete'){
+                            Notification::make()
+                                ->title('El contrato ya fue pagado')
                                 ->warning()
                                 ->send();
                             return false;
                         }
 
-                        $pay = $loan->capital - $data['amount'];
-                        $loan->capital = $loan->capital - $data['amount'];
+                        if($loan->date_contract_expiration < now()){
+                            Notification::make()
+                                ->title('El contrato esta vencido')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }
 
-                        $loan->utility = $pay * $loan->interest_rate / 100;
-                        $loan->balance_pay = $pay + $loan->utility;
+                        $payment->fill($data); //fill save payment
+
+                        if($data['type_payment'] == 'renovation') {
+                            $loan->date_contract_expiration = \Carbon\Carbon::parse($loan->date_contract_expiration)->addMonths(1)->format('Y-m-d');
+                            $loan->renovation = $loan->renovation + 1;
+                            $loan->save();
+                        }else if($data['type_payment'] == 'amortization') {
+                            //save actually data loan in dataAfterLoan
+
+                            //update data loan
+                            if($data['amount'] > $loan->capital){
+                                Notification::make()
+                                    ->title('El monto a pagar es mayor al capital')
+                                    ->warning()
+                                    ->send();
+                                return false;
+                            }
+
+                            $pay = $loan->capital - $data['amount'];
+                            $loan->capital = $loan->capital - $data['amount'];
+
+                            $loan->utility = $pay * $loan->interest_rate / 100;
+                            $loan->balance_pay = $pay + $loan->utility;
+                            $loan->save();
+
+                        }else if($data['type_payment'] == 'complete') {
+
+                            $loan->state = 'payment_complete';
+                            $loan->save();
+
+                        }
+
+                        Notification::make()
+                            ->title('Pago realizado')
+                            ->success()
+                            ->send();
+
+                        $payment->save();
+
+                        $dataAfterLoan->fill([
+                            'capital' => $loan->capital,
+                            'interest_rate' => $loan->interest_rate,
+                            'conservation_expense' => $loan->conservation_expense,
+                            'legal_interest' => $loan->legal_interest,
+                            'utility' => $loan->utility,
+                            'balance_pay' => $loan->balance_pay,
+                            'loan_id' => $loan->id,
+                            'payment_id' => $payment->id,
+                        ]);
+                        $dataAfterLoan->save();
+
+                    })
+                    ->after(function (array $data,Payments $payment,Loan $loan)  {
+                        //last payments
+                        $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
+                        if($last_payment){
+
+
+                            redirect()->route('print.payment', $last_payment->id);
+                        }
+
+                    })
+                    ->slideOver(),
+                Tables\Actions\Action::make('verified')
+                ->label('Verificar Contrato')
+                ->visible(fn (Loan $loan) => $loan->state != 'verified')
+                ->icon("heroicon-m-check-circle")
+                //change label button
+                ->requiresConfirmation()
+                ->modalHeading(fn (Loan $loan) => "Verificar el contrato {$loan->code_contract}")
+                ->modalDescription('Esta seguro de verificar este contrato?.')
+                ->modalSubmitActionLabel('Si, verificar')
+                ->form(self::getFormModalVerified())
+                    ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
+                        if($loan->articulos->count() == 0){
+                            Notification::make()
+                                ->title('No existen artículos')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }
+
+                        if($loan->articulos->sum('estimated_value') < $loan->capital){
+                            Notification::make()
+                                ->title('El Valor soportado es menor al capital')
+                                ->warning()
+                                ->send();
+                            return false;
+                        }
+
+                        $loan->state = 'verified';
                         $loan->save();
+                        Notification::make()
+                            ->title('El contrato ha sido iniciado')
+                            ->success()
+                            ->send();
 
-                    }else if($data['type_payment'] == 'complete') {
-
-                        $loan->state = 'payment_complete';
-                        $loan->save();
-
-                    }
-
-                    Notification::make()
-                        ->title('Pago realizado')
-                        ->success()
-                        ->send();
-
-                    $payment->save();
-
-                    $dataAfterLoan->fill([
-                        'capital' => $loan->capital,
-                        'interest_rate' => $loan->interest_rate,
-                        'conservation_expense' => $loan->conservation_expense,
-                        'legal_interest' => $loan->legal_interest,
-                        'utility' => $loan->utility,
-                        'balance_pay' => $loan->balance_pay,
-                        'loan_id' => $loan->id,
-                        'payment_id' => $payment->id,
-                    ]);
-                    $dataAfterLoan->save();
-
-                })
-                ->after(function (array $data,Payments $payment,Loan $loan)  {
-                    //last payments
-                    $last_payment = Payments::where('loan_id',$loan->id)->orderBy('id','desc')->first();
-                    if($last_payment){
-
-
-                        redirect()->route('print.payment', $last_payment->id);
-                    }
-
-                })
-                ->slideOver()
+                    })
+                    ->slideOver(),
             ])
-            ->bulkActions([
+            /* ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
+            ]) */
             ->emptyStateActions([
                 Tables\Actions\CreateAction::make(),
             ]);
@@ -533,6 +569,79 @@ class LoanResource extends Resource
                             ->hidden(fn (Get $get, Set $set, Loan $loan) => $get('type_payment') != 'complete')
                             ->columnStart(2)
                             ->required(),
+
+                ]),
+
+
+        ];
+    }
+
+    public static function getFormModalVerified() {
+        return [
+            Grid::make(2)
+                ->schema([
+                        TextInput::make('contract')
+                            ->label('Contrato')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->code_contract)
+                            ->required(),
+                        Hidden::make('loan_id')
+                            ->default(fn (Loan $loan) => $loan->id),
+                        Hidden::make('user_id')
+                            ->default(fn () => auth()->user()->id),
+                        TextInput::make('client')
+                            ->label('Cliente')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->client->code)
+                            ->required(),
+                        TextInput::make('client_name')
+                            ->label('Nombre del cliente')
+                            ->disabled()
+                            ->dehydrated()
+                            ->columnSpanFull()
+                            ->default(fn (Loan $loan) => $loan->client->full_name)
+                            ->required(),
+                        TextInput::make('capital')
+                            ->label('Capital')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->capital)
+                            ->required(),
+                        TextInput::make('utility')
+                            ->label('Utilidad')
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (Loan $loan) => $loan->utility)
+                            ->required(),
+                        TextInput::make('date_contract')
+                            ->label('Fecha de contrato')
+                            ->default(fn (Loan $loan) => $loan->date_contract)
+                            ->disabled()
+                            ->dehydrated()
+                            ->required(),
+                        TextInput::make('date_contract_expiration')
+                            ->label('Fecha de vencimiento')
+                            ->default(fn (Loan $loan) => $loan->date_contract_expiration)
+                            ->disabled()
+                            ->dehydrated()
+                            ->required(),
+
+                        TextInput::make('interest_rate')
+                            ->label('Tasa de interés (%)')
+                            ->default(fn (Loan $loan) => $loan->interest_rate)
+                            ->suffix('%')
+                            ->required()
+                            ->disabled(),
+
+                        TextInput::make('balance_pay')
+                            ->label('Saldo a pagar')
+                            ->default(fn (Loan $loan) => $loan->balance_pay)
+                            ->disabled()
+                            ->dehydrated()
+                            ->required(),
+
 
                 ]),
 
