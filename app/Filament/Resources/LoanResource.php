@@ -37,6 +37,7 @@ class LoanResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
@@ -335,41 +336,46 @@ class LoanResource extends Resource
                     })
                     ->slideOver(),
                 Tables\Actions\Action::make('verified')
-                ->label('Verificar Contrato')
-                ->visible(fn (Loan $loan) => $loan->state != 'verified')
-                ->icon("heroicon-m-check-circle")
-                //change label button
-                ->requiresConfirmation()
-                ->modalHeading(fn (Loan $loan) => "Verificar el contrato {$loan->code_contract}")
-                ->modalDescription('Esta seguro de verificar este contrato?.')
-                ->modalSubmitActionLabel('Si, verificar')
-                ->form(self::getFormModalVerified())
-                    ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
-                        if($loan->articulos->count() == 0){
+                    ->label('Verificar Contrato')
+                    ->visible(fn (Loan $loan) => $loan->state != 'verified')
+                    ->icon("heroicon-m-check-circle")
+                    //change label button
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Loan $loan) => "Verificar el contrato {$loan->code_contract}")
+                    ->modalDescription('Esta seguro de verificar este contrato?.')
+                    ->modalSubmitActionLabel('Si, verificar')
+                    ->form(self::getFormModalVerified())
+                        ->action(function (array $data, Payments $payment,Loan $loan, DataAfterLoan $dataAfterLoan) {
+                            if($loan->articulos->count() == 0){
+                                Notification::make()
+                                    ->title('No existen artículos')
+                                    ->warning()
+                                    ->send();
+                                return false;
+                            }
+
+                            if($loan->articulos->sum('estimated_value') < $loan->capital){
+                                Notification::make()
+                                    ->title('El Valor soportado es menor al capital')
+                                    ->warning()
+                                    ->send();
+                                return false;
+                            }
+
+                            $loan->state = 'verified';
+                            $loan->save();
                             Notification::make()
-                                ->title('No existen artículos')
-                                ->warning()
+                                ->title('El contrato ha sido iniciado')
+                                ->success()
                                 ->send();
-                            return false;
-                        }
 
-                        if($loan->articulos->sum('estimated_value') < $loan->capital){
-                            Notification::make()
-                                ->title('El Valor soportado es menor al capital')
-                                ->warning()
-                                ->send();
-                            return false;
-                        }
-
-                        $loan->state = 'verified';
-                        $loan->save();
-                        Notification::make()
-                            ->title('El contrato ha sido iniciado')
-                            ->success()
-                            ->send();
-
-                    })
+                        })
                     ->slideOver(),
+                    Tables\Actions\Action::make('print_garanty')
+                        ->label('Imprimir Garantia')
+                        ->hidden(fn (Loan $loan) => $loan->state != 'verified')
+                        ->icon("heroicon-m-document")
+                        ->url(fn (Loan $loan): string => route('print.garanty', $loan->id))
             ])
             /* ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

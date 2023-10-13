@@ -75,6 +75,11 @@ class Loan extends Model
         return $this->hasMany(Payments::class,'loan_id');
     }
 
+    public function user() : BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function contract_articles() : HasMany {
         return $this->hasMany(ContractArticle::class,'loan_id');
     }

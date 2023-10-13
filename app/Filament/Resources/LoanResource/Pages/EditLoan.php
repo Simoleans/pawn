@@ -29,7 +29,9 @@ class EditLoan extends EditRecord
         return [
             Action::make('Iniciar Contrato')
                 ->requiresConfirmation()
-                ->disabled(fn (Loan $loan) => $loan->state !== 'borrador')
+                ->icon('heroicon-m-clipboard-document-check')
+                //->disabled(fn (Loan $loan) => $loan->state !== 'borrador')
+                ->hidden(fn (Loan $loan) => $loan->state != 'borrador')
                 ->action(function(Loan $loan) {
 
                      //if exists articulos
@@ -55,11 +57,19 @@ class EditLoan extends EditRecord
                         ->title('El contrato ha sido iniciado')
                         ->success()
                         ->send();
-                    redirect()->route('filament.admin.resources.loans.edit',  $loan->id);
+                    //redirect()->route('filament.admin.resources.loans.edit',  $loan->id);
                 }),
-                Action::make('Anular Contrato')
+
+            Action::make('Imprimir Garantía')
+                ->hidden(fn (Loan $loan) => $loan->state != 'verified')
+                ->icon('heroicon-m-document')
+                ->color('warning')
+                ->url(fn (Loan $loan): string => route('print.garanty', $loan->id)),
+
+            Action::make('Anular Contrato')
                 ->requiresConfirmation()
                 ->color('danger')
+                ->icon('heroicon-m-no-symbol')
                 ->disabled(fn (Loan $loan) => $loan->payments->count() > 0 || $loan->state !== 'verified')
                 ->action(function(Loan $loan) {
 

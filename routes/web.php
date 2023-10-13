@@ -19,3 +19,4 @@ Route::get('/', function () {
 
 //pdf print loan payment
 Route::get('/print/{id}', [App\Http\Controllers\PrintController::class, 'printPayment'])->name('print.payment');
+Route::get('/print/garanty/{id}', [App\Http\Controllers\PrintController::class, 'printGaranty'])->name('print.garanty');
