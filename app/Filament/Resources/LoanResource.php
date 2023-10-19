@@ -213,8 +213,8 @@ class LoanResource extends Resource
                     ->label('Código Cliente')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client.full_name')
-                    ->label('Cliente')
-                    ->searchable(),
+                    ->label('Cliente'),
+                    //->searchable(),
                 Tables\Columns\TextColumn::make('state')
                     ->label('Estado')
                     ->badge()

@@ -32,7 +32,13 @@ class ItemResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->whereIn('branch_id', auth()->user()->branches->pluck('id')->toArray());
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()->hasRole('super')) {
+            return $query;
+        }else{
+            return $query->whereIn('branch_id', auth()->user()->branches->pluck('id')->toArray());
+        }
     }
 
     public static function getNavigationGroup(): ?string
@@ -141,10 +147,15 @@ class ItemResource extends Resource
                     ->label('Estado'),
                 Tables\Columns\TextColumn::make('client.full_name')
                     ->label('Cliente'),
+                    //->searchable(),
+                Tables\Columns\TextColumn::make('client.document')
+                    ->label('Cliente')
+                    ->hidden()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Categoría')
-                    ->sortable()
-                    ->searchable(),
+                    ->sortable(),
+                    //->searchable(),
                 ImageColumn::make('image_url')
                     ->label('Imagen')
                     ->extraImgAttributes(['loading' => 'lazy']),
@@ -153,6 +164,11 @@ class ItemResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                    //loan
+                Tables\Columns\TextColumn::make('loan.code_contract')
+                    ->label('Prestamo')
+                    ->sortable()
+                    ->searchable(),
                 /* Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

@@ -21,11 +21,6 @@ class ItemsRelationManager extends RelationManager
     protected static string $relationship = 'articulos';
 
 
-    protected function afterCreate(): void
-    {
-        dd('afterCreate');
-    }
-
     public function form(Form $form): Form
     {
         return $form
@@ -34,25 +29,14 @@ class ItemsRelationManager extends RelationManager
                 ->label('Foto del Artículo')
                 ->image()
                 ->columnSpanFull(),
-                /* Forms\Components\Select::make('client_id')
-                    ->label('Cliente')
-                    ->required()
-                    ->relationship('client', 'first_name')
-                    ->getOptionLabelFromRecordUsing(fn (Client $record) => "{$record->first_name} {$record->last_name}")
-                    ->searchable(['first_name', 'last_name'])
-                    ->preload(), */
+
                 Forms\Components\Select::make('category_id')
                     ->label('Categoría')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
-                /* Forms\Components\Select::make('branch_id')
-                    ->label('Sucursal')
-                    ->relationship('branch', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(), */
+
                 Forms\Components\TextInput::make('name')
                     ->label('Nombre del Artículo')
                     ->required()
@@ -93,14 +77,10 @@ class ItemsRelationManager extends RelationManager
                     'for_sale' => 'En Venta',
                 ])
                 ->default('pending')
-                //->disabled()
                 ->hidden()
                 ->dehydrated()
                 ->required(),
-                /* Forms\Components\TextInput::make('sale_price')
-                    ->label('Precio de Venta')
-                    ->required()
-                    ->numeric(), */
+
             ]);
     }
 
@@ -125,7 +105,8 @@ class ItemsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                ->label('Agregar Artículo'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
