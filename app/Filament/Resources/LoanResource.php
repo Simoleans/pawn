@@ -227,6 +227,10 @@ class LoanResource extends Resource
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->searchable(),
+                Tables\Columns\TextColumn::make('client.document')
+                    ->label('CI Cliente')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('date_contract')
                     ->label('Fecha de contrato')
                     ->dateTime('Y-m-d')

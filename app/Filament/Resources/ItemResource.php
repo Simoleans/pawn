@@ -140,14 +140,14 @@ class ItemResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Artículo')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('condition_label')
+                Tables\Columns\TextColumn::make('condition')
                     ->label('Condición')
+                    ->view('tables.columns.condition-item')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('state_label')
                     ->label('Estado'),
                 Tables\Columns\TextColumn::make('client.full_name')
                     ->label('Cliente'),
-                    //->searchable(),
                 Tables\Columns\TextColumn::make('client.document')
                     ->label('Cliente')
                     ->hidden()
@@ -155,7 +155,6 @@ class ItemResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Categoría')
                     ->sortable(),
-                    //->searchable(),
                 ImageColumn::make('image_url')
                     ->label('Imagen')
                     ->extraImgAttributes(['loading' => 'lazy']),
@@ -164,15 +163,15 @@ class ItemResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('client.document')
+                    ->label('CI Cliente')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                     //loan
                 Tables\Columns\TextColumn::make('loan.code_contract')
                     ->label('Prestamo')
                     ->sortable()
                     ->searchable(),
-                /* Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true), */
             ])
             ->filters([
                 //
