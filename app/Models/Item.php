@@ -56,7 +56,7 @@ class Item extends Model
 
     public function loan(): BelongsTo
     {
-        return $this->BelongsTo(Loan::class);
+        return $this->BelongsTo(Loan::class,'loan_id');
     }
 
     public function branch(): BelongsTo

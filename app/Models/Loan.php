@@ -70,7 +70,7 @@ class Loan extends Model
         return $this->hasMany(Item::class,'loan_id');
     }
 
-    public function payments() : HasMany
+    public function pagos() : HasMany
     {
         return $this->hasMany(Payments::class,'loan_id');
     }

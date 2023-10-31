@@ -65,6 +65,8 @@ class LoanResource extends Resource
     }
 
 
+
+
     public static function form(Form $form): Form
     {
         return $form
@@ -246,6 +248,7 @@ class LoanResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                //Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('updateAuthor')
                     ->label('Pagar')
                     ->hidden(fn (Loan $loan) => $loan->state == 'payment_complete' || $loan->state == 'rejected' || $loan->state == 'borrador' || $loan->date_contract_expiration < now())
@@ -379,13 +382,16 @@ class LoanResource extends Resource
                         ->label('Imprimir Garantia')
                         ->hidden(fn (Loan $loan) => $loan->state != 'verified')
                         ->icon("heroicon-m-document")
-                        ->url(fn (Loan $loan): string => route('print.garanty', $loan->id))
+                        ->url(fn (Loan $loan): string => route('print.garanty', $loan->id)),
+
             ])
             /* ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]) */
+            /* ->recordAction(Tables\Actions\ViewAction::class)
+            ->recordUrl(null) */
             ->emptyStateActions([
                 Tables\Actions\CreateAction::make(),
             ]);
@@ -413,6 +419,7 @@ class LoanResource extends Resource
             'index' => Pages\ListLoans::route('/'),
             'create' => Pages\CreateLoan::route('/create'),
             'edit' => Pages\EditLoan::route('/{record}/edit'),
+            //view' => Pages\ViewLoan::route('/{record}'),
         ];
     }
 
