@@ -12,7 +12,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use IbrahimBougaoua\FilamentRatingStar\Actions\RatingStar;
+use IbrahimBougaoua\FilamentRatingStar\Actions\RatingStarColumn;
 
 class ClientResource extends Resource
 {
@@ -52,6 +53,8 @@ class ClientResource extends Resource
     {
         return $form
             ->schema([
+                RatingStar::make('rating')
+                    ->label('Calificaciòn'),
                 Forms\Components\TextInput::make('code')
                     ->label('Código')
                     ->required()
@@ -112,6 +115,8 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
+                RatingStarColumn::make('rating')
+                ->label('Calificaciòn'),
                 Tables\Columns\TextColumn::make('code')
                     ->label('Código')
                     ->searchable(),

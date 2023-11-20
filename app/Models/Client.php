@@ -23,6 +23,7 @@ class Client extends Model
         'email',
         'mobile',
         'issued',
+        'rating',
     ];
     protected $guarded = [
         'id',
