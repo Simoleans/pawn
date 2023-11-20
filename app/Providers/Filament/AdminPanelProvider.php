@@ -17,6 +17,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use pxlrbt\FilamentSpotlight\SpotlightPlugin;
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -62,6 +63,8 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Lime,
                 'success' => '#46AE4E',
                 'warning' => '#F8AA19',
+            ])->plugins([
+                SpotlightPlugin::make(),
             ]);
             //->plugin(FilamentSpatieRolesPermissionsPlugin::make());
     }

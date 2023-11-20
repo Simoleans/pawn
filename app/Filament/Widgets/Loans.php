@@ -11,6 +11,7 @@ use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Actions\Pages\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction as ExportActionTable;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use App\Models\Client;
 use Filament\Notifications\Notification;
@@ -244,7 +245,15 @@ class Loans extends BaseWidget
                         ->url(fn (Loan $loan): string => route('print.garanty', $loan->id)),
 
             ])->filters([
-                DateRangeFilter::make('created_at'),
+                DateRangeFilter::make('created_at')
+                ->label('Fecha de creación'),
+
+            ])
+            ->headerActions([
+                ExportActionTable::make()->exports([
+                    ExcelExport::make('table')->fromTable(),
+                    //ExcelExport::make('form')->fromForm(),
+                ])
 
             ])
             ->bulkActions([
