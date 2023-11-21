@@ -56,6 +56,10 @@ class StatsOverview extends BaseWidget
                 }
             })->description('Contratos Vencidos Entre 16 y 30 Días')
             ->descriptionIcon('heroicon-m-calendar')
+            ->extraAttributes([
+                'class' => 'cursor-pointer',
+                'wire:click' => "redirectQueryLoan('".now()->subDays(30)->format('Y-m-d')."','".now()->subDays(16)->format('Y-m-d')."')",
+            ])
             ->color('warning'),
 
             Stat::make('Contratos Vencidos 31-60 Días', function () {
@@ -66,6 +70,10 @@ class StatsOverview extends BaseWidget
                 }
             })->description('Contratos Vencidos Entre 31 y 60 Días')
             ->descriptionIcon('heroicon-m-calendar')
+            ->extraAttributes([
+                'class' => 'cursor-pointer',
+                'wire:click' => "redirectQueryLoan('".now()->subDays(60)->format('Y-m-d')."','".now()->subDays(31)->format('Y-m-d')."')",
+            ])
             ->color('warning'),
 
             Stat::make('Contratos Vencidos 61 Días en Adelante', function () {
@@ -76,8 +84,19 @@ class StatsOverview extends BaseWidget
                 }
             })->description('Contratos Vencidos Desde Hace 61 Días')
             ->descriptionIcon('heroicon-m-calendar')
+            ->extraAttributes([
+                'class' => 'cursor-pointer',
+                'wire:click' => "redirectQueryLoan( null, '".now()->subDays(61)->format('Y-m-d')."')",
+            ])
             ->color('danger')
         ];
 
+    }
+
+    public function redirectQueryLoan($from = null, $to = null)
+    {
+        //dd($from, $to);
+
+        return redirect()->to('/admin/loan-query?from='.$from.'&to='.$to);
     }
 }

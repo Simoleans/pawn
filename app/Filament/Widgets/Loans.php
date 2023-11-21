@@ -38,33 +38,23 @@ class Loans extends BaseWidget
     //title of the widget
     protected static ?string $heading = 'Últimos Préstamos';
 
-    protected function getTableHeaderActions(): array
-    {
-        return [
-            //Actions\CreateAction::make(),
+    public  $from;
+    public  $to;
 
-            ExportAction::make()
-                ->exports([
-                    ExcelExport::make()
-                        ->fromTable()
-                        ->withFilename(fn ($resource) => $resource::getModelLabel() . '-' . date('Y-m-d'))
-                        ->withWriterType(\Maatwebsite\Excel\Excel::CSV)
-                        ->withColumns([
-                            Column::make('updated_at'),
-                        ])
-                ]),
-        ];
-    }
 
 
     public function table(Table $table): Table
     {
+        //dd($this->from, $this->to);
         return $table
         ->query(
             Loan::query()
-                    ->where('state', '!=', 'completed')
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
+                ->where('state', '!=', 'completed')
+                ->when($this->from && $this->to, function ($query) {
+                    $query->whereBetween('date_contract_expiration', [$this->from, $this->to]);
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('code')
