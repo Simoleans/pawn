@@ -50,6 +50,10 @@ class Loans extends BaseWidget
         ->query(
             Loan::query()
                 ->where('state', '!=', 'completed')
+                ->when($this->to, function ($query) {
+                    //$query->whereBetween('date_contract_expiration', [$this->from, $this->to]);
+                    $query->where('date_contract_expiration', '<', now());
+                })
                 ->when($this->from && $this->to, function ($query) {
                     $query->whereBetween('date_contract_expiration', [$this->from, $this->to]);
                 })

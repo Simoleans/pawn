@@ -28,10 +28,15 @@ class LoanQuery extends Page
 
     //protected static ?string $slug = 'loan-query?from='.$this->from.'&to='.$this->to;
 
+    public static function shouldRegisterNavigation(): bool
+{
+    return false;
+}
+
     public function getAttrs()
     {
         return [
-            'attr-nombre' => 'valor',
+            'attr-nombre' => '',
         ];
     }
 
